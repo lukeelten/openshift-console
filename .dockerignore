@@ -1,1 +1,7 @@
 frontend/node_modules
+bin
+.github
+docs
+examples
+contrib
+dynamic-demo-plugin
