@@ -120,6 +120,9 @@ func main() {
 	fPrometheusPublicURL := fs.String("prometheus-public-url", "", "Public URL of the cluster's Prometheus server.")
 	fThanosPublicURL := fs.String("thanos-public-url", "", "Public URL of the cluster's Thanos server.")
 
+	fCustomThanosUrl := fs.String("custom-thanos-url", "", "URL for custom Thanos or Prometheus Host.")
+	fCustomAlertmanagerUrl := fs.String("custom-alertmanager-url", "", "URL for custom Alertmanager Host.")
+
 	consolePluginsFlags := serverconfig.MultiKeyValue{}
 	fs.Var(&consolePluginsFlags, "plugins", "List of plugin entries that are enabled for the console. Each entry consist of plugin-name as a key and plugin-endpoint as a value.")
 	fPluginProxy := fs.String("plugin-proxy", "", "Defines various service types to which will console proxy plugins requests. (JSON as string)")
@@ -190,6 +193,40 @@ func main() {
 	thanosPublicURL := &url.URL{}
 	if *fThanosPublicURL != "" {
 		thanosPublicURL = bridge.ValidateFlagIsURL("thanos-public-url", *fThanosPublicURL)
+	}
+
+	hasCustomEndpoints := false
+	thanosProxyUrl := &url.URL{}
+	thanosTenancyProxy := &url.URL{}
+	thanosTenancyProxyForRules := &url.URL{}
+	if *fCustomThanosUrl != "" {
+		hasCustomEndpoints = true
+		thanosProxyUrl = bridge.ValidateFlagIsURL("custom-thanos-url", *fCustomThanosUrl)
+		if !strings.HasSuffix(*fCustomThanosUrl, "/api") {
+			thanosProxyUrl.Path = "/api"
+		}
+
+		thanosTenancyProxy = thanosProxyUrl
+		thanosTenancyProxyForRules = thanosProxyUrl
+	} else {
+		thanosProxyUrl = &url.URL{Scheme: "https", Host: openshiftThanosHost, Path: "/api"}
+		thanosTenancyProxy = &url.URL{Scheme: "https", Host: openshiftThanosTenancyHost, Path: "/api"}
+		thanosTenancyProxyForRules = &url.URL{Scheme: "https", Host: openshiftThanosTenancyForRulesHost, Path: "/api"}
+	}
+
+	alertmanagerProxy := &url.URL{}
+	alertmanagerTenancyProxy := &url.URL{}
+	if *fCustomAlertmanagerUrl != "" {
+		hasCustomEndpoints = true
+		alertmanagerProxy = bridge.ValidateFlagIsURL("custom-alertmanager-url", *fCustomAlertmanagerUrl)
+		if !strings.HasSuffix(*fCustomAlertmanagerUrl, "/api") {
+			alertmanagerProxy.Path = "/api"
+		}
+
+		alertmanagerTenancyProxy = alertmanagerProxy
+	} else {
+		alertmanagerProxy = &url.URL{Scheme: "https", Host: openshiftAlertManagerHost, Path: "/api"}
+		alertmanagerTenancyProxy = &url.URL{Scheme: "https", Host: openshiftAlertManagerTenancyHost, Path: "/api"}
 	}
 
 	branding := *fBranding
@@ -393,7 +430,7 @@ func main() {
 		k8sAuthServiceAccountBearerToken = string(bearerToken)
 
 		// If running in an OpenShift cluster, set up a proxy to the prometheus-k8s service running in the openshift-monitoring namespace.
-		if *fServiceCAFile != "" {
+		if *fServiceCAFile != "" || hasCustomEndpoints {
 			serviceCertPEM, err := ioutil.ReadFile(*fServiceCAFile)
 			if err != nil {
 				klog.Fatalf("failed to read service-ca.crt file: %v", err)
@@ -408,27 +445,27 @@ func main() {
 			srv.ThanosProxyConfig = &proxy.Config{
 				TLSClientConfig: serviceProxyTLSConfig,
 				HeaderBlacklist: []string{"Cookie", "X-CSRFToken"},
-				Endpoint:        &url.URL{Scheme: "https", Host: openshiftThanosHost, Path: "/api"},
+				Endpoint:        thanosProxyUrl,
 			}
 			srv.ThanosTenancyProxyConfig = &proxy.Config{
 				TLSClientConfig: serviceProxyTLSConfig,
 				HeaderBlacklist: []string{"Cookie", "X-CSRFToken"},
-				Endpoint:        &url.URL{Scheme: "https", Host: openshiftThanosTenancyHost, Path: "/api"},
+				Endpoint:        thanosTenancyProxy,
 			}
 			srv.ThanosTenancyProxyForRulesConfig = &proxy.Config{
 				TLSClientConfig: serviceProxyTLSConfig,
 				HeaderBlacklist: []string{"Cookie", "X-CSRFToken"},
-				Endpoint:        &url.URL{Scheme: "https", Host: openshiftThanosTenancyForRulesHost, Path: "/api"},
+				Endpoint:        thanosTenancyProxyForRules,
 			}
 			srv.AlertManagerProxyConfig = &proxy.Config{
 				TLSClientConfig: serviceProxyTLSConfig,
 				HeaderBlacklist: []string{"Cookie", "X-CSRFToken"},
-				Endpoint:        &url.URL{Scheme: "https", Host: openshiftAlertManagerHost, Path: "/api"},
+				Endpoint:        alertmanagerProxy,
 			}
 			srv.AlertManagerTenancyProxyConfig = &proxy.Config{
 				TLSClientConfig: serviceProxyTLSConfig,
 				HeaderBlacklist: []string{"Cookie", "X-CSRFToken"},
-				Endpoint:        &url.URL{Scheme: "https", Host: openshiftAlertManagerTenancyHost, Path: "/api"},
+				Endpoint:        alertmanagerTenancyProxy,
 			}
 			srv.MeteringProxyConfig = &proxy.Config{
 				TLSClientConfig: serviceProxyTLSConfig,
