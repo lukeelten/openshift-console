@@ -432,18 +432,23 @@ func main() {
 		k8sAuthServiceAccountBearerToken = string(bearerToken)
 
 		// If running in an OpenShift cluster, set up a proxy to the prometheus-k8s service running in the openshift-monitoring namespace.
-		if *fServiceCAFile != "" || hasCustomEndpoints {
+		serviceProxyRootCAs := x509.NewCertPool()
+		var serviceProxyTLSConfig *tls.Config = nil
+		if *fServiceCAFile != "" {
 			serviceCertPEM, err := ioutil.ReadFile(*fServiceCAFile)
 			if err != nil {
 				klog.Fatalf("failed to read service-ca.crt file: %v", err)
 			}
-			serviceProxyRootCAs := x509.NewCertPool()
 			if !serviceProxyRootCAs.AppendCertsFromPEM(serviceCertPEM) {
 				klog.Fatal("no CA found for Kubernetes services")
 			}
-			serviceProxyTLSConfig := oscrypto.SecureTLSConfig(&tls.Config{
+
+			serviceProxyTLSConfig = oscrypto.SecureTLSConfig(&tls.Config{
 				RootCAs: serviceProxyRootCAs,
 			})
+		}
+
+		if serviceProxyTLSConfig != nil || hasCustomEndpoints {
 			srv.ThanosProxyConfig = &proxy.Config{
 				TLSClientConfig: serviceProxyTLSConfig,
 				HeaderBlacklist: []string{"Cookie", "X-CSRFToken"},
