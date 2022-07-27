@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	instana "github.com/instana/go-sensor"
 	"log"
 	"net"
 	"net/http"
@@ -40,6 +41,15 @@ func FilterHeaders(r *http.Response) error {
 		r.Header.Del(h)
 	}
 	return nil
+}
+
+func NewProxyWithInstana(cfg *Config, sensor *instana.Sensor) *Proxy {
+	proxy := NewProxy(cfg)
+	if sensor != nil {
+		transport := instana.RoundTripper(sensor, proxy.reverseProxy.Transport)
+		proxy.reverseProxy.Transport = transport
+	}
+	return proxy
 }
 
 func NewProxy(cfg *Config) *Proxy {

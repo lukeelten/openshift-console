@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	instana "github.com/instana/go-sensor"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -201,7 +202,15 @@ func (s *Server) getLocalK8sClient() *http.Client {
 	return s.K8sClients[serverutils.LocalClusterName]
 }
 
+func (s *Server) HTTPHandlerWithInstana(sensor *instana.Sensor) http.Handler {
+	return s.httpHandlerImpl(sensor)
+}
+
 func (s *Server) HTTPHandler() http.Handler {
+	return s.httpHandlerImpl(nil)
+}
+
+func (s *Server) httpHandlerImpl(sensor *instana.Sensor) http.Handler {
 	mux := http.NewServeMux()
 
 	if len(s.BaseURL.Scheme) > 0 && len(s.BaseURL.Host) > 0 {
@@ -215,11 +224,16 @@ func (s *Server) HTTPHandler() http.Handler {
 	localK8sClient := s.getLocalK8sClient()
 	k8sProxies := make(map[string]*proxy.Proxy)
 	for cluster, proxyConfig := range s.K8sProxyConfigs {
-		k8sProxies[cluster] = proxy.NewProxy(proxyConfig)
+		k8sProxies[cluster] = proxy.NewProxyWithInstana(proxyConfig, sensor)
 	}
 
 	handle := func(path string, handler http.Handler) {
-		mux.Handle(proxy.SingleJoiningSlash(s.BaseURL.Path, path), handler)
+		if sensor != nil {
+			localPath := proxy.SingleJoiningSlash(s.BaseURL.Path, path)
+			mux.Handle(localPath, instana.TracingHandlerFunc(sensor, localPath, handler.ServeHTTP))
+		} else {
+			mux.Handle(proxy.SingleJoiningSlash(s.BaseURL.Path, path), handler)
+		}
 	}
 
 	handleFunc := func(path string, handler http.HandlerFunc) { handle(path, handler) }
@@ -368,9 +382,9 @@ func (s *Server) HTTPHandler() http.Handler {
 			tenancyRulesSourcePath      = prometheusTenancyProxyEndpoint + "/api/v1/rules"
 			tenancyTargetAPIPath        = prometheusTenancyProxyEndpoint + "/api/"
 
-			thanosProxy                = proxy.NewProxy(s.ThanosProxyConfig)
-			thanosTenancyProxy         = proxy.NewProxy(s.ThanosTenancyProxyConfig)
-			thanosTenancyForRulesProxy = proxy.NewProxy(s.ThanosTenancyProxyForRulesConfig)
+			thanosProxy                = proxy.NewProxyWithInstana(s.ThanosProxyConfig, sensor)
+			thanosTenancyProxy         = proxy.NewProxyWithInstana(s.ThanosTenancyProxyConfig, sensor)
+			thanosTenancyForRulesProxy = proxy.NewProxyWithInstana(s.ThanosTenancyProxyForRulesConfig, sensor)
 		)
 
 		// global label, query, and query_range requests have to be proxied via thanos
@@ -464,8 +478,8 @@ func (s *Server) HTTPHandler() http.Handler {
 			alertManagerProxyAPIPath        = alertManagerProxyEndpoint + "/api/"
 			alertManagerTenancyProxyAPIPath = alertManagerTenancyProxyEndpoint + "/api/"
 
-			alertManagerProxy        = proxy.NewProxy(s.AlertManagerProxyConfig)
-			alertManagerTenancyProxy = proxy.NewProxy(s.AlertManagerTenancyProxyConfig)
+			alertManagerProxy        = proxy.NewProxyWithInstana(s.AlertManagerProxyConfig, sensor)
+			alertManagerTenancyProxy = proxy.NewProxyWithInstana(s.AlertManagerTenancyProxyConfig, sensor)
 		)
 
 		handle(alertManagerProxyAPIPath, http.StripPrefix(
@@ -487,7 +501,7 @@ func (s *Server) HTTPHandler() http.Handler {
 
 	if s.meteringProxyEnabled() {
 		meteringProxyAPIPath := meteringProxyEndpoint + "/api/"
-		meteringProxy := proxy.NewProxy(s.MeteringProxyConfig)
+		meteringProxy := proxy.NewProxyWithInstana(s.MeteringProxyConfig, sensor)
 		handle(meteringProxyAPIPath, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, meteringProxyAPIPath),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
@@ -497,7 +511,7 @@ func (s *Server) HTTPHandler() http.Handler {
 		)
 	}
 
-	clusterManagementProxy := proxy.NewProxy(s.ClusterManagementProxyConfig)
+	clusterManagementProxy := proxy.NewProxyWithInstana(s.ClusterManagementProxyConfig, sensor)
 	handle(accountManagementEndpoint, http.StripPrefix(
 		s.BaseURL.Path,
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -572,7 +586,7 @@ func (s *Server) HTTPHandler() http.Handler {
 		}
 		for _, proxyServiceHandler := range proxyServiceHandlers {
 			klog.Infof(" - %s -> %s\n", proxyServiceHandler.ConsoleEndpoint, proxyServiceHandler.ProxyConfig.Endpoint)
-			serviceProxy := proxy.NewProxy(proxyServiceHandler.ProxyConfig)
+			serviceProxy := proxy.NewProxyWithInstana(proxyServiceHandler.ProxyConfig, sensor)
 			f := func(w http.ResponseWriter, r *http.Request) {
 				serviceProxy.ServeHTTP(w, r)
 			}
@@ -635,7 +649,7 @@ func (s *Server) HTTPHandler() http.Handler {
 
 	// GitOps proxy endpoints
 	if s.gitopsProxyEnabled() {
-		gitopsProxy := proxy.NewProxy(s.GitOpsProxyConfig)
+		gitopsProxy := proxy.NewProxyWithInstana(s.GitOpsProxyConfig, sensor)
 		handle(gitopsEndpoint, http.StripPrefix(
 			proxy.SingleJoiningSlash(s.BaseURL.Path, gitopsEndpoint),
 			authHandlerWithUser(func(user *auth.User, w http.ResponseWriter, r *http.Request) {
