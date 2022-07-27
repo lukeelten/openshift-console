@@ -15,6 +15,7 @@ import (
 	"os"
 	"strings"
 
+	instana "github.com/instana/go-sensor"
 	"github.com/openshift/console/pkg/auth"
 	"github.com/openshift/console/pkg/bridge"
 	"github.com/openshift/console/pkg/knative"
@@ -122,6 +123,7 @@ func main() {
 
 	fCustomThanosUrl := fs.String("custom-thanos-url", "", "URL for custom Thanos or Prometheus Host.")
 	fCustomAlertmanagerUrl := fs.String("custom-alertmanager-url", "", "URL for custom Alertmanager Host.")
+	fEnableInstanaSensor := fs.Bool("enable-instana-sensor", false, "Initialize Instana Sensor after startup")
 
 	consolePluginsFlags := serverconfig.MultiKeyValue{}
 	fs.Var(&consolePluginsFlags, "plugins", "List of plugin entries that are enabled for the console. Each entry consist of plugin-name as a key and plugin-endpoint as a value.")
@@ -794,9 +796,18 @@ func main() {
 		bridge.FlagFatalf("listen", "scheme must be one of: http, https")
 	}
 
+	var handler http.Handler
+	if *fEnableInstanaSensor {
+		klog.Infof("Enable Instana Sensor")
+		sensor := instana.NewSensor("openshift-console")
+		handler = srv.HTTPHandlerWithInstana(sensor)
+	} else {
+		handler = srv.HTTPHandler()
+	}
+
 	httpsrv := &http.Server{
 		Addr:    listenURL.Host,
-		Handler: srv.HTTPHandler(),
+		Handler: handler,
 		// Disable HTTP/2, which breaks WebSockets.
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 		TLSConfig:    oscrypto.SecureTLSConfig(&tls.Config{}),
