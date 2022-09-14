@@ -24,41 +24,45 @@
 22.  [`ListPageFilter`](#listpagefilter)
 23.  [`useListPageFilter`](#uselistpagefilter)
 24.  [`ResourceLink`](#resourcelink)
-25.  [`useK8sModel`](#usek8smodel)
-26.  [`useK8sModels`](#usek8smodels)
-27.  [`useK8sWatchResource`](#usek8swatchresource)
-28.  [`useK8sWatchResources`](#usek8swatchresources)
-29.  [`consoleFetch`](#consolefetch)
-30.  [`consoleFetchJSON`](#consolefetchjson)
-31.  [`consoleFetchText`](#consolefetchtext)
-32.  [`getConsoleRequestHeaders`](#getconsolerequestheaders)
-33.  [`k8sGetResource`](#k8sgetresource)
-34.  [`k8sCreateResource`](#k8screateresource)
-35.  [`k8sUpdateResource`](#k8supdateresource)
-36.  [`k8sPatchResource`](#k8spatchresource)
-37.  [`k8sDeleteResource`](#k8sdeleteresource)
-38.  [`k8sListResource`](#k8slistresource)
-39.  [`k8sListResourceItems`](#k8slistresourceitems)
-40.  [`getAPIVersionForModel`](#getapiversionformodel)
-41.  [`getGroupVersionKindForResource`](#getgroupversionkindforresource)
-42.  [`getGroupVersionKindForModel`](#getgroupversionkindformodel)
-43.  [`StatusPopupSection`](#statuspopupsection)
-44.  [`StatusPopupItem`](#statuspopupitem)
-45.  [`Overview`](#overview)
-46.  [`OverviewGrid`](#overviewgrid)
-47.  [`InventoryItem`](#inventoryitem)
-48.  [`InventoryItemTitle`](#inventoryitemtitle)
-49.  [`InventoryItemBody`](#inventoryitembody)
-50.  [`InventoryItemStatus`](#inventoryitemstatus)
-51.  [`InventoryItemLoading`](#inventoryitemloading)
-52.  [`useFlag`](#useflag)
-53.  [`ResourceYAMLEditor`](#resourceyamleditor)
-54.  [`ResourceEventStream`](#resourceeventstream)
-55.  [`usePrometheusPoll`](#useprometheuspoll)
-56.  [`Timestamp`](#timestamp)
-57. [DEPRECATED] [`PerspectiveContext`](#perspectivecontext)
-58. [DEPRECATED] [`useAccessReviewAllowed`](#useaccessreviewallowed)
-59. [DEPRECATED] [`useSafetyFirst`](#usesafetyfirst)
+25.  [`ResourceIcon`](#resourceicon)
+26.  [`useK8sModel`](#usek8smodel)
+27.  [`useK8sModels`](#usek8smodels)
+28.  [`useK8sWatchResource`](#usek8swatchresource)
+29.  [`useK8sWatchResources`](#usek8swatchresources)
+30.  [`consoleFetch`](#consolefetch)
+31.  [`consoleFetchJSON`](#consolefetchjson)
+32.  [`consoleFetchText`](#consolefetchtext)
+33.  [`getConsoleRequestHeaders`](#getconsolerequestheaders)
+34.  [`k8sGetResource`](#k8sgetresource)
+35.  [`k8sCreateResource`](#k8screateresource)
+36.  [`k8sUpdateResource`](#k8supdateresource)
+37.  [`k8sPatchResource`](#k8spatchresource)
+38.  [`k8sDeleteResource`](#k8sdeleteresource)
+39.  [`k8sListResource`](#k8slistresource)
+40.  [`k8sListResourceItems`](#k8slistresourceitems)
+41.  [`getAPIVersionForModel`](#getapiversionformodel)
+42.  [`getGroupVersionKindForResource`](#getgroupversionkindforresource)
+43.  [`getGroupVersionKindForModel`](#getgroupversionkindformodel)
+44.  [`StatusPopupSection`](#statuspopupsection)
+45.  [`StatusPopupItem`](#statuspopupitem)
+46.  [`Overview`](#overview)
+47.  [`OverviewGrid`](#overviewgrid)
+48.  [`InventoryItem`](#inventoryitem)
+49.  [`InventoryItemTitle`](#inventoryitemtitle)
+50.  [`InventoryItemBody`](#inventoryitembody)
+51.  [`InventoryItemStatus`](#inventoryitemstatus)
+52.  [`InventoryItemLoading`](#inventoryitemloading)
+53.  [`useFlag`](#useflag)
+54.  [`YAMLEditor`](#yamleditor)
+55.  [`ResourceYAMLEditor`](#resourceyamleditor)
+56.  [`ResourceEventStream`](#resourceeventstream)
+57.  [`usePrometheusPoll`](#useprometheuspoll)
+58.  [`Timestamp`](#timestamp)
+59.  [`useModal`](#usemodal)
+60.  [`ActionServiceProvider`](#actionserviceprovider)
+61. [DEPRECATED] [`PerspectiveContext`](#perspectivecontext)
+62. [DEPRECATED] [`useAccessReviewAllowed`](#useaccessreviewallowed)
+63. [DEPRECATED] [`useSafetyFirst`](#usesafetyfirst)
 
 ---
 
@@ -959,6 +963,37 @@ Component that creates a link to a specific resource type with an icon badge
 
 ---
 
+## `ResourceIcon`
+
+### Summary 
+
+Component that creates an icon badge for a specific resource type
+
+
+
+### Example
+
+
+```tsx
+<ResourceIcon kind="Pod"/>
+```
+
+
+
+
+
+### Parameters
+
+| Parameter Name | Description |
+| -------------- | ----------- |
+| `kind` | (optional) the kind of resource i.e. Pod, Deployment, Namespace |
+| `groupVersionKind` | (optional) object with group, version, and kind |
+| `className` | (optional) class style for component |
+
+
+
+---
+
 ## `useK8sModel`
 
 ### Summary 
@@ -1833,11 +1868,50 @@ the boolean value of the requested feature flag or undefined
 
 ---
 
+## `YAMLEditor`
+
+### Summary 
+
+A basic lazy loaded YAML editor with hover help and completion.
+
+
+
+### Example
+
+
+```tsx
+<React.Suspense fallback={<LoadingBox />}>
+  <YAMLEditor
+    value={code}
+  />
+</React.Suspense>
+```
+
+
+
+
+
+### Parameters
+
+| Parameter Name | Description |
+| -------------- | ----------- |
+| `value` | String representing the yaml code to render. |
+| `options` | Monaco editor options. For more details, please, visit https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html. |
+| `minHeight` | Minimum editor height in valid CSS height values. |
+| `showShortcuts` | Boolean to show shortcuts on top of the editor. |
+| `toolbarLinks` | Array of ReactNode rendered on the toolbar links section on top of the editor. |
+| `onChange` | Callback for on code change event. |
+| `onSave` | Callback called when the command CTRL / CMD + S is triggered. |
+
+
+
+---
+
 ## `ResourceYAMLEditor`
 
 ### Summary 
 
-A lazy loaded YAML editor for Kubernetes resources with hover help and completion.<br/>The editor will handle updating the resource when the user clicks save unless an onSave handler is provided.<br/>It should be wrapped in a React.Suspense component.
+A lazy loaded YAML editor for Kubernetes resources with hover help and completion.<br/>The component use the YAMLEditor and add on top of it more functionality like<br/>resource update handling, alerts, save, cancel and reload buttons, accessibility and more.<br/>Unless onSave callback is provided, the resource update is automatically handled.<br/>It should be wrapped in a React.Suspense component.
 
 
 
@@ -1948,6 +2022,58 @@ A component to render timestamp.<br/>The timestamps are synchronized between inv
 | `simple` | render simple version of the component omitting icon and tooltip. |
 | `omitSuffix` | formats the date ommiting the suffix. |
 | `className` | additional class name for the component. |
+
+
+
+---
+
+## `useModal`
+
+### Summary 
+
+A hook to launch Modals.<br/><br/>```tsx<br/>const AppPage: React.FC = () => {<br/> const [launchModal] = useModal();<br/> const onClick = () => launchModal(ModalComponent);<br/> return (<br/>   <Button onClick={onClick}>Launch a Modal</Button><br/> )<br/>}<br/>```
+
+
+
+
+
+
+---
+
+## `ActionServiceProvider`
+
+### Summary 
+
+Component that allows to receive contributions from other plugins for the `console.action/provider` extension type.<br/>See docs: https://github.com/openshift/console/blob/master/frontend/packages/console-dynamic-plugin-sdk/docs/console-extensions.md#consoleactionprovider
+
+
+
+### Example
+
+
+```tsx
+   const context: ActionContext = { 'a-context-id': { dataFromDynamicPlugin } };
+
+   ...
+
+   <ActionServiceProvider context={context}>
+       {({ actions, options, loaded }) =>
+         loaded && (
+           <ActionMenu actions={actions} options={options} variant={ActionMenuVariant.DROPDOWN} />
+         )
+       }
+   </ActionServiceProvider>
+```
+
+
+
+
+
+### Parameters
+
+| Parameter Name | Description |
+| -------------- | ----------- |
+| `context` | Object with contextId and optional plugin data |
 
 
 

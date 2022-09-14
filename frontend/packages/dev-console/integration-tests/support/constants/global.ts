@@ -16,6 +16,10 @@ export enum devNavigationMenu {
   Deployments = 'Deployments',
 }
 
+export enum adminNavigationBar {
+  Home = 'Home',
+}
+
 export enum switchPerspective {
   Developer = 'Developer',
   Administrator = 'Administrator',
@@ -39,6 +43,8 @@ export enum operators {
   QuayContainerSecurity = 'Quay Container Security',
   ShipwrightOperator = 'Shipwright Operator',
   RedisOperator = 'Redis Operator',
+  AMQStreams = 'AMQ Streams',
+  RHOAS = 'RHOAS',
 }
 
 export enum authenticationType {
