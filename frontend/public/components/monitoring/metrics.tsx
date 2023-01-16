@@ -9,7 +9,7 @@ import {
 import {
   ActionGroup,
   Button,
-  Dropdown as PFDropdown,
+  Dropdown,
   DropdownItem,
   DropdownPosition,
   DropdownToggle,
@@ -17,7 +17,6 @@ import {
   EmptyStateBody,
   EmptyStateIcon,
   EmptyStateVariant,
-  KebabToggle,
   Switch,
   Title,
 } from '@patternfly/react-core';
@@ -55,6 +54,7 @@ import {
   queryBrowserRunQueries,
   queryBrowserSetAllExpanded,
   queryBrowserSetPollInterval,
+  queryBrowserToggleAllSeries,
   queryBrowserToggleIsEnabled,
   queryBrowserToggleSeries,
   toggleGraphs,
@@ -64,6 +64,7 @@ import { getPrometheusURL } from '../graphs/helpers';
 import { AsyncComponent, getURLSearchParams, LoadingInline, usePoll, useSafeFetch } from '../utils';
 import { setAllQueryArguments } from '../utils/router';
 import { useBoolean } from './hooks/useBoolean';
+import KebabDropdown from './kebab-dropdown';
 import IntervalDropdown from './poll-interval-dropdown';
 import { colors, Error, QueryBrowser } from './query-browser';
 import TablePagination from './table-pagination';
@@ -106,7 +107,7 @@ const MetricsActionsMenu: React.FC<{}> = () => {
   ];
 
   return (
-    <PFDropdown
+    <Dropdown
       className="co-actions-menu"
       dropdownItems={dropdownItems}
       isOpen={isOpen}
@@ -214,16 +215,11 @@ const SeriesButton: React.FC<SeriesButtonProps> = ({ index, labels }) => {
 const QueryKebab: React.FC<{ index: number }> = ({ index }) => {
   const { t } = useTranslation();
 
-  const [isOpen, setIsOpen, , setClosed] = useBoolean(false);
-
   const isDisabledSeriesEmpty = useSelector(({ observe }: RootState) =>
     _.isEmpty(observe.getIn(['queryBrowser', 'queries', index, 'disabledSeries'])),
   );
   const isEnabled = useSelector(({ observe }: RootState) =>
     observe.getIn(['queryBrowser', 'queries', index, 'isEnabled']),
-  );
-  const series = useSelector(({ observe }: RootState) =>
-    observe.getIn(['queryBrowser', 'queries', index, 'series']),
   );
 
   const dispatch = useDispatch();
@@ -233,15 +229,10 @@ const QueryKebab: React.FC<{ index: number }> = ({ index }) => {
     index,
   ]);
 
-  const toggleAllSeries = React.useCallback(
-    () =>
-      dispatch(
-        queryBrowserPatchQuery(index, {
-          disabledSeries: isDisabledSeriesEmpty ? series : [],
-        }),
-      ),
-    [dispatch, index, isDisabledSeriesEmpty, series],
-  );
+  const toggleAllSeries = React.useCallback(() => dispatch(queryBrowserToggleAllSeries(index)), [
+    dispatch,
+    index,
+  ]);
 
   const doDelete = React.useCallback(() => {
     dispatch(queryBrowserDeleteQuery(index));
@@ -267,17 +258,7 @@ const QueryKebab: React.FC<{ index: number }> = ({ index }) => {
     </DropdownItem>,
   ];
 
-  return (
-    <PFDropdown
-      data-test-id="kebab-button"
-      dropdownItems={dropdownItems}
-      isOpen={isOpen}
-      isPlain
-      onSelect={setClosed}
-      position={DropdownPosition.right}
-      toggle={<KebabToggle id="toggle-kebab" onToggle={setIsOpen} />}
-    />
-  );
+  return <KebabDropdown dropdownItems={dropdownItems} />;
 };
 
 export const QueryTable: React.FC<QueryTableProps> = ({ index, namespace }) => {
@@ -308,6 +289,17 @@ export const QueryTable: React.FC<QueryTableProps> = ({ index, namespace }) => {
 
   const lastRequestTime = useSelector(({ observe }: RootState) =>
     observe.getIn(['queryBrowser', 'lastRequestTime']),
+  );
+
+  const dispatch = useDispatch();
+
+  const toggleAllSeries = React.useCallback(() => dispatch(queryBrowserToggleAllSeries(index)), [
+    dispatch,
+    index,
+  ]);
+
+  const isDisabledSeriesEmpty = useSelector(({ observe }: RootState) =>
+    _.isEmpty(observe.getIn(['queryBrowser', 'queries', index, 'disabledSeries'])),
   );
 
   const safeFetch = React.useCallback(useSafeFetch(), []);
@@ -444,6 +436,14 @@ export const QueryTable: React.FC<QueryTableProps> = ({ index, namespace }) => {
     <>
       <div className="query-browser__table-wrapper">
         <div className="horizontal-scroll">
+          <Button
+            variant="link"
+            isInline
+            onClick={toggleAllSeries}
+            className="query-browser__series-select-all-btn"
+          >
+            {isDisabledSeriesEmpty ? t('public~Unselect all') : t('public~Select all')}
+          </Button>
           <Table
             aria-label={t('public~query results table')}
             cells={columns}
@@ -684,9 +684,10 @@ const QueriesList: React.FC<{}> = () => {
 
   return (
     <>
-      {_.range(count).map((i) => (
-        <Query index={i} key={i} />
-      ))}
+      {_.range(count).map((index) => {
+        const reversedIndex = count - index - 1;
+        return <Query index={reversedIndex} key={reversedIndex} />;
+      })}
     </>
   );
 };

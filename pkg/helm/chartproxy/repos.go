@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/yaml"
 
@@ -39,6 +40,8 @@ var (
 
 const (
 	configNamespace = "openshift-config"
+	warning         = "console-warning"
+	ErrorMessage    = "The following repositories seem to be invalid or unreachable: "
 )
 
 type helmRepo struct {
@@ -76,6 +79,7 @@ func (hr helmRepo) IndexFile() (*repo.IndexFile, error) {
 	if !strings.HasSuffix(indexURL, "/index.yaml") {
 		indexURL += "/index.yaml"
 	}
+	httpClient.Timeout = time.Duration(5 * time.Second)
 	resp, err := httpClient.Get(indexURL)
 	if err != nil {
 		return nil, err

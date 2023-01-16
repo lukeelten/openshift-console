@@ -60,6 +60,7 @@ export const addPage = {
         break;
       case 'Pipeline':
       case addOptions.Pipeline:
+        cy.wait(3000);
         cy.byTestID('item pipeline').click();
         cy.get('.odc-pipeline-builder-header__title').should(
           'have.text',
@@ -74,6 +75,13 @@ export const addPage = {
         cy.get('[data-mode-id="yaml"]').should('be.visible');
         app.waitForLoad();
         cy.testA11y(pageTitle.YAML);
+        break;
+      case 'Samples':
+      case addOptions.Samples:
+        cy.byTestID('item import-from-samples').click();
+        app.waitForLoad();
+        detailsPage.titleShouldContain(pageTitle.Samples);
+        cy.testA11y(pageTitle.Samples);
         break;
       case 'Channel':
       case addOptions.Channel:

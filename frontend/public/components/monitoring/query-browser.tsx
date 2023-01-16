@@ -9,6 +9,10 @@ import {
   PrometheusValue,
 } from '@console/dynamic-plugin-sdk';
 import {
+  formatPrometheusDuration,
+  parsePrometheusDuration,
+} from '@openshift-console/plugin-shared/src/datetime/prometheus';
+import {
   Chart,
   ChartArea,
   ChartAxis,
@@ -22,10 +26,15 @@ import {
   Alert,
   Button,
   Checkbox,
+  Dropdown,
+  DropdownItem,
+  DropdownPosition,
+  DropdownToggle,
   EmptyState,
   EmptyStateBody,
   EmptyStateIcon,
   EmptyStateVariant,
+  InputGroup,
   TextInput,
   Title,
 } from '@patternfly/react-core';
@@ -46,28 +55,19 @@ import {
 import { RootState } from '../../redux';
 import { GraphEmpty } from '../graphs/graph-empty';
 import { getPrometheusURL } from '../graphs/helpers';
-import {
-  Dropdown,
-  humanizeNumberSI,
-  LoadingInline,
-  usePoll,
-  useRefWidth,
-  useSafeFetch,
-} from '../utils';
+import { humanizeNumberSI, LoadingInline, usePoll, useRefWidth, useSafeFetch } from '../utils';
 import {
   dateFormatterNoYear,
   dateTimeFormatterWithSeconds,
-  formatPrometheusDuration,
-  parsePrometheusDuration,
   timeFormatter,
   timeFormatterWithSeconds,
 } from '../utils/datetime';
 import { formatNumber } from './format';
+import { useBoolean } from './hooks/useBoolean';
 import { queryBrowserTheme } from './query-browser-theme';
 import { PrometheusAPIError } from './types';
 
 const spans = ['5m', '15m', '30m', '1h', '2h', '6h', '12h', '1d', '2d', '1w', '2w'];
-const dropdownItems = _.zipObject(spans, spans);
 export const colors = queryBrowserTheme.line.colorScale;
 
 // Use exponential notation for small or very large numbers to avoid labels with too many characters
@@ -106,6 +106,8 @@ const SpanControls: React.FC<SpanControlsProps> = React.memo(
 
     const { t } = useTranslation();
 
+    const [isOpen, setIsOpen, , setClosed] = useBoolean(false);
+
     React.useEffect(() => {
       setText(formatPrometheusDuration(span));
     }, [span]);
@@ -123,24 +125,35 @@ const SpanControls: React.FC<SpanControlsProps> = React.memo(
       }
     };
 
+    const dropdownItems = spans.map((s) => (
+      <DropdownItem
+        className="query-browser__span-dropdown-item"
+        key={s}
+        onClick={() => setSpan(s, true)}
+      >
+        {s}
+      </DropdownItem>
+    ));
+
     return (
       <>
-        <TextInput
-          aria-label={t('public~graph timespan')}
-          className="query-browser__span-text"
-          validated={isValid ? 'default' : 'error'}
-          onChange={(v) => setSpan(v, true)}
-          type="text"
-          value={text}
-        />
-        <Dropdown
-          ariaLabel={t('public~graph timespan')}
-          buttonClassName="dropdown-button--icon-only"
-          items={dropdownItems}
-          menuClassName="query-browser__span-dropdown-menu"
-          noSelection={true}
-          onChange={(v: string) => setSpan(v)}
-        />
+        <InputGroup className="query-browser__span">
+          <TextInput
+            aria-label={t('public~graph timespan')}
+            className="query-browser__span-text"
+            validated={isValid ? 'default' : 'error'}
+            onChange={(v) => setSpan(v, true)}
+            type="text"
+            value={text}
+          />
+          <Dropdown
+            dropdownItems={dropdownItems}
+            isOpen={isOpen}
+            onSelect={setClosed}
+            position={DropdownPosition.right}
+            toggle={<DropdownToggle aria-label={t('public~graph timespan')} onToggle={setIsOpen} />}
+          />
+        </InputGroup>
         <Button
           className="query-browser__inline-control"
           onClick={() => setSpan(defaultSpanText)}
@@ -372,7 +385,7 @@ const Graph: React.FC<GraphProps> = React.memo(
         _.every(series, ([, values]) => _.every(values, { y: 0 })),
       );
       if (isAllZero) {
-        domain.y = [-1, 1];
+        domain.y = [0, 1];
       }
     } else {
       // Set a reasonable Y-axis range based on the min and max values in the data
@@ -381,7 +394,7 @@ const Graph: React.FC<GraphProps> = React.memo(
       let minY: number = findMin(data.map(findMin))?.y ?? 0;
       let maxY: number = findMax(data.map(findMax))?.y ?? 0;
       if (minY === 0 && maxY === 0) {
-        minY = -1;
+        minY = 0;
         maxY = 1;
       } else if (minY > 0 && maxY > 0) {
         minY = 0;

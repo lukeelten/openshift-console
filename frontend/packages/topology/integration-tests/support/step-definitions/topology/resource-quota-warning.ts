@@ -1,4 +1,4 @@
-import { Given, When, Then } from 'cypress-cucumber-preprocessor/steps';
+import { Given, When, Then, And } from 'cypress-cucumber-preprocessor/steps';
 import { detailsPage } from '@console/cypress-integration-tests/views/details-page';
 import { listPage } from '@console/cypress-integration-tests/views/list-page';
 import { modal } from '@console/cypress-integration-tests/views/modal';
@@ -10,7 +10,9 @@ import {
   topologyHelper,
   topologyPage,
   app,
+  topologySidePane,
 } from '@console/dev-console/integration-tests/support/pages';
+import { topologyPO } from '../../page-objects/topology-po';
 
 const deteleResourceQuota = () => {
   detailsPage.isLoaded();
@@ -68,3 +70,21 @@ When(
     cy.get('h2').should('contain.text', 'ResourceQuota details');
   },
 );
+
+Then('user is able to see resource quota alert', () => {
+  topologySidePane.verifyResourceQuotaAlert();
+});
+
+And('user is able to see yellow border around {string} workload', (workloadName: string) => {
+  topologyPage.verifyNodeAlert(workloadName);
+});
+
+And('user continously clicks on zoom-out button until it gets maximum zoomed out', () => {
+  topologyPage.clickMaxZoomOut();
+});
+
+Then('user is able to see yellow background on workload for resource quota alert', () => {
+  cy.byLegacyTestID('ex-node-js1')
+    .get(topologyPO.graph.warningBackground)
+    .should('be.visible');
+});

@@ -56,6 +56,7 @@
       "utilityConsumer": "./components/UtilityConsumer",
       "exampleProxyPage": "./components/ExampleProxyPage",
       "K8sAPIConsumer": "./components/k8sConsumer/K8sAPIConsumer",
+      "exampleNamespacedPage": "./components/ExampleNamespacedPage",
       "navPage": "./components/Nav",
       "listPage": "./components/ListPage",
       "projectTabContent": "./components/ProjectTabExtensionContent",
@@ -64,12 +65,11 @@
       "yamlEditor": "./components/YAMLEditorPage",
       "events": "./components/APIServerEvents",
       "overviewDetailItem": "./components/OverviewDetailItem",
+      "customOverviewDetailItem": "./components/CustomOverviewDetailItem",
       "projectOverviewInventory": "./components/ProjectOverview/Inventory",
       "projectOverview": "./utils/project-overview",
-      "modalPage": "./components/Modals/ModalPage"
-    },
-    "dependencies": {
-      "@console/pluginAPI": "*"
+      "modalPage": "./components/Modals/ModalPage",
+      "sampleErrorBoundaryPage": "./components/ErrorBoundary/SampleErrorBoundaryPage"
     },
     "disableStaticPlugins": [
       "@console/demo-plugin"

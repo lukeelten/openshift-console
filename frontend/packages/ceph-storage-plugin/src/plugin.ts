@@ -32,6 +32,7 @@ import {
   detectComponents,
   FEATURES,
   RGW_FLAG,
+  ODF_ADMIN,
 } from './features';
 import { ODF_MODEL_FLAG } from './constants';
 import { getObcStatusGroups } from './components/dashboards/object-service/buckets-card/utils';
@@ -198,6 +199,7 @@ const plugin: Plugin<ConsumedExtensions> = [
     },
     flags: {
       required: [CEPH_FLAG],
+      disallowed: [FEATURES.DASHBOARD_RESOURCES],
     },
   },
   {
@@ -217,6 +219,7 @@ const plugin: Plugin<ConsumedExtensions> = [
     },
     flags: {
       required: [CEPH_FLAG],
+      disallowed: [FEATURES.DASHBOARD_RESOURCES],
     },
   },
   // Noobaa Related Plugins
@@ -284,7 +287,7 @@ const plugin: Plugin<ConsumedExtensions> = [
         ).then((m) => m.ObjectBucketsPage),
     },
     flags: {
-      required: [OCS_MODEL_FLAG],
+      required: [OCS_MODEL_FLAG, ODF_ADMIN],
       disallowed: [FEATURES.MCG_RESOURCE],
     },
   },
@@ -298,7 +301,7 @@ const plugin: Plugin<ConsumedExtensions> = [
         ).then((m) => m.ObjectBucketDetailsPage),
     },
     flags: {
-      required: [OCS_MODEL_FLAG],
+      required: [OCS_MODEL_FLAG, ODF_ADMIN],
       disallowed: [FEATURES.MCG_RESOURCE],
     },
   },
@@ -312,7 +315,7 @@ const plugin: Plugin<ConsumedExtensions> = [
         ).then((m) => m.ObjectBucketClaimsPage),
     },
     flags: {
-      required: [OCS_MODEL_FLAG],
+      required: [OCS_MODEL_FLAG, ODF_ADMIN],
       disallowed: [FEATURES.MCG_RESOURCE],
     },
   },
@@ -326,7 +329,7 @@ const plugin: Plugin<ConsumedExtensions> = [
         ).then((m) => m.ObjectBucketClaimsDetailsPage),
     },
     flags: {
-      required: [OCS_MODEL_FLAG],
+      required: [OCS_MODEL_FLAG, ODF_ADMIN],
       disallowed: [FEATURES.MCG_RESOURCE],
     },
   },
@@ -340,7 +343,7 @@ const plugin: Plugin<ConsumedExtensions> = [
         ).then((m) => m.CreateOBCPage),
     },
     flags: {
-      required: [MCG_FLAG],
+      required: [MCG_FLAG, ODF_ADMIN],
       disallowed: [FEATURES.MCG_RESOURCE],
     },
   },
@@ -355,7 +358,7 @@ const plugin: Plugin<ConsumedExtensions> = [
         ).then((m) => m.CreateOBCPage),
     },
     flags: {
-      required: [RGW_FLAG],
+      required: [RGW_FLAG, ODF_ADMIN],
       disallowed: [MCG_FLAG, FEATURES.MCG_RESOURCE],
     },
   },
@@ -389,6 +392,7 @@ const plugin: Plugin<ConsumedExtensions> = [
     },
     flags: {
       required: [MCG_FLAG],
+      disallowed: [FEATURES.INVENTORY_ITEM],
     },
   },
   {

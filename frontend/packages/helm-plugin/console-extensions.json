@@ -34,9 +34,6 @@
         "kind": "HelmChartRepository"
       },
       "provider": { "$codeRef": "helmActions.useHelmChartRepositoryActions" }
-    },
-    "flags": {
-      "required": ["OPENSHIFT_HELM"]
     }
   },
   {
@@ -48,9 +45,6 @@
         "kind": "ProjectHelmChartRepository"
       },
       "provider": { "$codeRef": "helmActions.useHelmChartRepositoryActions" }
-    },
-    "flags": {
-      "required": ["OPENSHIFT_HELM"]
     }
   },
   {
@@ -146,9 +140,15 @@
     }
   },
   {
+    "type": "console.flag/hookProvider",
+    "properties": {
+      "handler": { "$codeRef": "helmActions.helmChartTypeProvider" }
+    }
+  },
+  {
     "type": "dev-console.add/action",
     "flags": {
-      "required": ["OPENSHIFT_HELM"]
+      "required": ["OPENSHIFT_HELM", "DEVELOPER_CATALOG", "HELM_CHARTS_CATALOG_TYPE"]
     },
     "properties": {
       "id": "helm",
@@ -234,7 +234,7 @@
       "provider": { "$codeRef": "helmActions.useTopologyActionProvider" }
     },
     "flags": {
-      "required": ["OPENSHIFT_HELM"]
+      "required": ["OPENSHIFT_HELM", "DEVELOPER_CATALOG", "HELM_CHARTS_CATALOG_TYPE"]
     }
   },
   {

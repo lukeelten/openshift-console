@@ -226,6 +226,12 @@ export const topologyPage = {
   componentNode: (nodeName: string) => {
     return cy.get('g.pf-topology__node__label > text').contains(nodeName);
   },
+  componentNodeClick: (nodeName: string, options?: { timeout: number }) => {
+    topologyHelper.search(nodeName);
+    cy.get('[data-type="workload"] .is-filtered [data-test-id="base-node-handler"]', options)
+      .first()
+      .click({ force: true });
+  },
   knativeNode: (nodeName: string) => {
     return cy.get('g.odc-knative-service__label > text').contains(nodeName);
   },
@@ -235,7 +241,7 @@ export const topologyPage = {
       .contains(eventSource);
   },
   getRevisionNode: (serviceName: string) => {
-    cy.get('[data-type="knative-service"] g.pf-topology__group__label > text')
+    cy.get('[data-type="knative-service"] g.pf-topology__group__label > text', { timeout: 80000 })
       .contains(serviceName)
       .should('be.visible');
     return cy.get('[data-type="knative-revision"] ellipse.pf-topology__node__background');
@@ -287,6 +293,9 @@ export const topologyPage = {
   },
   rightClickOnNode: (nodeName: string) => {
     topologyPage.getNode(nodeName).trigger('contextmenu', { force: true });
+  },
+  rightClickOnKnativeNode: (nodeName: string) => {
+    topologyPage.getKnativeNode(nodeName).trigger('contextmenu', { force: true });
   },
   rightClickOnGroup: (releaseName: string) => {
     topologyPage.getGroup(releaseName).trigger('contextmenu', { force: true });
@@ -435,6 +444,25 @@ export const topologyPage = {
     cy.get('button[data-test-id="start-build-action"]')
       .should('be.visible')
       .click({ force: true });
+  },
+  verifyNodeAlert: (nodeName: string) => {
+    cy.get('[data-type="workload"]')
+      .find('.pf-topology__node.pf-m-warning')
+      .contains(nodeName);
+  },
+  verifyListNodeAlert: (nodeName: string) => {
+    cy.get('.odc-topology-list-view__label-cell')
+      .contains(nodeName)
+      .parent()
+      .find('div.odc-topology-list-view__alert-cell')
+      .contains('Alerts:');
+  },
+  clickMaxZoomOut: () => {
+    cy.get(topologyPO.graph.emptyGraph).click();
+    cy.get(topologyPO.graph.reset).click();
+    for (let i = 0; i < 5; i++) {
+      cy.get(topologyPO.graph.zoomOut).click();
+    }
   },
 };
 

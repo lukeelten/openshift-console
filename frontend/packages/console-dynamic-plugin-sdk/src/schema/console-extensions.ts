@@ -5,6 +5,7 @@ import {
   ClusterOverviewInventoryItem,
   ClusterOverviewUtilizationItem,
   ClusterOverviewMultilineUtilizationItem,
+  CustomOverviewDetailItem,
   OverviewDetailItem,
 } from '../extensions/cluster-overview';
 import { ClusterGlobalConfig } from '../extensions/cluster-settings';
@@ -31,7 +32,7 @@ import {
   FeatureFlagHookProvider,
 } from '../extensions/feature-flags';
 import { FileUpload } from '../extensions/file-upload';
-import { HorizontalNavTab } from '../extensions/horizontal-nav-tabs';
+import { HorizontalNavTab, NavTab } from '../extensions/horizontal-nav-tabs';
 import { ImportEnvironment } from '../extensions/import-environments';
 import {
   HrefNavItem,
@@ -128,10 +129,12 @@ export type SupportedExtension =
   | UserPreferenceItem
   | Perspective
   | HorizontalNavTab
+  | NavTab
   | ClusterOverviewInventoryItem
   | ClusterOverviewUtilizationItem
   | ClusterOverviewMultilineUtilizationItem
   | OverviewDetailItem
+  | CustomOverviewDetailItem
   | ProjectOverviewUtilizationItem
   | ProjectOverviewInventoryItem
   | StorageClassProvisioner;
