@@ -326,7 +326,6 @@ export const createOrUpdateDeployment = (
     limits: { cpu, memory },
     git: { url: repository, ref },
     healthChecks,
-    resources,
   } = formData;
 
   const imageStreamName = imageStream && imageStream.metadata.name;
@@ -339,7 +338,7 @@ export const createOrUpdateDeployment = (
     'alpha.image.policy.openshift.io/resolve-names': '*',
     ...getTriggerAnnotation(name, imageName, namespace, imageChange),
   };
-  const podLabels = getPodLabels(resources, name);
+  const podLabels = getPodLabels(Resources.Kubernetes, name);
   const templateLabels = getTemplateLabels(originalDeployment);
 
   const newDeployment = {
@@ -401,7 +400,6 @@ export const createOrUpdateDeploymentConfig = (
     limits: { cpu, memory },
     git: { url: repository, ref },
     healthChecks,
-    resources,
   } = formData;
 
   const imageStreamName = imageStream && imageStream.metadata.name;
@@ -411,7 +409,7 @@ export const createOrUpdateDeploymentConfig = (
     ...getGitAnnotations(repository, ref),
     ...getRouteAnnotations(),
   };
-  const podLabels = getPodLabels(resources, name);
+  const podLabels = getPodLabels(Resources.OpenShift, name);
   const templateLabels = getTemplateLabels(originalDeploymentConfig);
 
   const newDeploymentConfig = {
@@ -564,6 +562,9 @@ export const createDevfileResources = async (
     devfileSuggestedResources,
   ).reduce((acc: DevfileSuggestedResources, resourceType: string) => {
     const resource: K8sResourceKind = devfileSuggestedResources[resourceType];
+    if (!resource) {
+      return acc;
+    }
     return {
       ...acc,
       [resourceType]: {
@@ -617,26 +618,33 @@ export const createDevfileResources = async (
     verb,
   );
 
-  const serviceModelResponse = await k8sCreate(
-    ServiceModel,
-    createService(formData, devfileResourceObjects.imageStream, devfileResourceObjects.service),
-    dryRun ? dryRunOpt : {},
-  );
+  const serviceModelResponse =
+    devfileResourceObjects.service &&
+    (await k8sCreate(
+      ServiceModel,
+      createService(formData, devfileResourceObjects.imageStream, devfileResourceObjects.service),
+      dryRun ? dryRunOpt : {},
+    ));
 
-  const routeResponse = await k8sCreate(
-    RouteModel,
-    createRoute(formData, devfileResourceObjects.imageStream, devfileResourceObjects.route),
-    dryRun ? dryRunOpt : {},
-  );
+  const routeResponse =
+    devfileResourceObjects.route &&
+    (await k8sCreate(
+      RouteModel,
+      createRoute(formData, devfileResourceObjects.imageStream, devfileResourceObjects.route),
+      dryRun ? dryRunOpt : {},
+    ));
 
-  return [
+  const devfileResources = [
     imageStreamResponse,
     buildConfigResponse,
     webhookSecretResponse,
     deploymentResponse,
-    serviceModelResponse,
-    routeResponse,
   ];
+
+  serviceModelResponse && devfileResources.push(serviceModelResponse);
+  routeResponse && devfileResources.push(routeResponse);
+
+  return devfileResources;
 };
 
 export const createOrUpdateResources = async (

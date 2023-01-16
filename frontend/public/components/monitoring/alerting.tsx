@@ -1,21 +1,34 @@
-import * as classNames from 'classnames';
-import i18next from 'i18next';
-import * as _ from 'lodash-es';
+import {
+  Action,
+  Alert,
+  AlertSeverity,
+  AlertStates,
+  BlueInfoCircleIcon,
+  GreenCheckCircleIcon,
+  PrometheusAlert,
+  PrometheusLabels,
+  RedExclamationCircleIcon,
+  ResourceStatus,
+  RowFilter,
+  Rule,
+  Silence,
+  SilenceStates,
+  useActivePerspective,
+  YellowExclamationTriangleIcon,
+} from '@console/dynamic-plugin-sdk';
+import { formatPrometheusDuration } from '@openshift-console/plugin-shared/src/datetime/prometheus';
 import {
   Alert as PFAlert,
   Button,
   CodeBlock,
   CodeBlockCode,
+  Label,
   Popover,
+  Toolbar,
+  ToolbarContent,
+  ToolbarGroup,
+  ToolbarItem,
 } from '@patternfly/react-core';
-import { sortable } from '@patternfly/react-table';
-import * as React from 'react';
-import { Helmet } from 'react-helmet';
-import { useTranslation } from 'react-i18next';
-// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
-// @ts-ignore
-import { useDispatch, useSelector } from 'react-redux';
-import { Link, Redirect, Route, Switch } from 'react-router-dom';
 import {
   BanIcon,
   BellIcon,
@@ -23,16 +36,22 @@ import {
   HourglassHalfIcon,
   OutlinedBellIcon,
 } from '@patternfly/react-icons';
+import { sortable } from '@patternfly/react-table';
+import classNames from 'classnames';
+import i18next from 'i18next';
+import * as _ from 'lodash-es';
+import * as React from 'react';
+import { Helmet } from 'react-helmet';
+import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+// @ts-ignore
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, Redirect, Route, Switch } from 'react-router-dom';
 
-import { useActivePerspective, ResourceStatus } from '@console/dynamic-plugin-sdk';
-import {
-  BlueInfoCircleIcon,
-  GreenCheckCircleIcon,
-  RedExclamationCircleIcon,
-  YellowExclamationTriangleIcon,
-} from '@console/shared';
-import { useActiveNamespace } from '@console/shared/src/hooks/useActiveNamespace';
 import { withFallback } from '@console/shared/src/components/error';
+import { useActiveNamespace } from '@console/shared/src/hooks/useActiveNamespace';
+import { ActionContext } from '@console/dynamic-plugin-sdk/src/api/internal-types';
+import { ActionServiceProvider } from '@console/dynamic-plugin-sdk/src/lib-core';
 import {
   alertingErrored,
   alertingLoaded,
@@ -52,32 +71,30 @@ import {
 } from '../../models';
 import { K8sKind } from '../../module/k8s';
 import { RootState } from '../../redux';
+import { breadcrumbsForGlobalConfig } from '../cluster-settings/global-config';
 import { RowFunctionArgs, Table, TableData, TableProps } from '../factory';
-import { FilterToolbar, RowFilter } from '../filter-toolbar';
+import { FilterToolbar } from '../filter-toolbar';
+import { getPrometheusURL, PrometheusEndpoint } from '../graphs/helpers';
 import { confirmModal } from '../modals';
-import { PrometheusLabels } from '../graphs';
-import { AlertmanagerYAMLEditorWrapper } from './alert-manager-yaml-editor';
+import { refreshNotificationPollers } from '../notification-drawer';
+import { ActionsMenu } from '../utils/dropdown';
+import { Firehose } from '../utils/firehose';
+import { ActionButtons, BreadCrumbs, SectionHeading } from '../utils/headings';
+import { Kebab } from '../utils/kebab';
+import { ExternalLink, getURLSearchParams, LinkifyExternal } from '../utils/link';
+import { ResourceLink } from '../utils/resource-link';
+import { history } from '../utils/router';
+import { LoadingInline, StatusBox } from '../utils/status-box';
+import { Timestamp } from '../utils/timestamp';
 import { AlertmanagerConfigWrapper } from './alert-manager-config';
+import { AlertmanagerYAMLEditorWrapper } from './alert-manager-yaml-editor';
 import MonitoringDashboardsPage from './dashboards';
-import { Label, Labels } from './labels';
+import { Labels } from './labels';
 import { QueryBrowserPage, ToggleGraph } from './metrics';
 import { FormatSeriesTitle, QueryBrowser } from './query-browser';
 import { CreateSilence, EditSilence } from './silence-form';
 import { TargetsUI } from './targets';
-import {
-  Alert,
-  Alerts,
-  AlertSeverity,
-  AlertSource,
-  AlertStates,
-  ListPageProps,
-  MonitoringResource,
-  PrometheusAlert,
-  Rule,
-  Silence,
-  Silences,
-  SilenceStates,
-} from './types';
+import { Alerts, AlertSource, ListPageProps, MonitoringResource, Silences } from './types';
 import {
   alertDescription,
   alertingRuleSource,
@@ -88,22 +105,10 @@ import {
   getAlertsAndRules,
   labelsToParams,
   RuleResource,
+  silenceMatcherEqualitySymbol,
   SilenceResource,
   silenceState,
 } from './utils';
-import { refreshNotificationPollers } from '../notification-drawer';
-import { formatPrometheusDuration } from '../utils/datetime';
-import { ActionsMenu } from '../utils/dropdown';
-import { Firehose } from '../utils/firehose';
-import { SectionHeading, ActionButtons, BreadCrumbs } from '../utils/headings';
-import { Kebab } from '../utils/kebab';
-import { getURLSearchParams, LinkifyExternal } from '../utils/link';
-import { ResourceLink } from '../utils/resource-link';
-import { history } from '../utils/router';
-import { LoadingInline, StatusBox } from '../utils/status-box';
-import { Timestamp } from '../utils/timestamp';
-import { getPrometheusURL, PrometheusEndpoint } from '../graphs/helpers';
-import { breadcrumbsForGlobalConfig } from '../cluster-settings/global-config';
 
 const ruleURL = (rule: Rule) => `${RuleResource.plural}/${_.get(rule, 'id')}`;
 
@@ -161,15 +166,18 @@ const MonitoringResourceIcon: React.FC<MonitoringResourceIconProps> = ({ classNa
   </span>
 );
 
-const alertStateIcons = {
-  [AlertStates.Firing]: <BellIcon />,
-  [AlertStates.Pending]: <OutlinedBellIcon />,
-  [AlertStates.Silenced]: <BellSlashIcon className="text-muted" />,
-};
-
-const AlertStateIcon: React.FC<{ state: string }> = React.memo(
-  ({ state }) => alertStateIcons[state],
-);
+const AlertStateIcon: React.FC<{ state: string }> = React.memo(({ state }) => {
+  switch (state) {
+    case AlertStates.Firing:
+      return <BellIcon />;
+    case AlertStates.Pending:
+      return <OutlinedBellIcon />;
+    case AlertStates.Silenced:
+      return <BellSlashIcon className="text-muted" />;
+    default:
+      return null;
+  }
+});
 
 const getAlertStateKey = (state) => {
   switch (state) {
@@ -185,7 +193,7 @@ const getAlertStateKey = (state) => {
 };
 
 export const AlertState: React.FC<AlertStateProps> = React.memo(({ state }) => {
-  const icon = alertStateIcons[state];
+  const icon = <AlertStateIcon state={state} />;
 
   return icon ? (
     <>
@@ -343,7 +351,7 @@ const PopoverField: React.FC<{ body: React.ReactNode; label: string }> = ({ body
   </Popover>
 );
 
-const AlertStateHelp: React.FC<{}> = React.memo(() => {
+const AlertStateHelp: React.FC<{}> = () => {
   const { t } = useTranslation();
   return (
     <dl className="co-inline">
@@ -374,9 +382,9 @@ const AlertStateHelp: React.FC<{}> = React.memo(() => {
       </dd>
     </dl>
   );
-});
+};
 
-const SeverityHelp: React.FC<{}> = React.memo(() => {
+const SeverityHelp: React.FC<{}> = () => {
   const { t } = useTranslation();
   return (
     <dl className="co-inline">
@@ -409,9 +417,9 @@ const SeverityHelp: React.FC<{}> = React.memo(() => {
       </dd>
     </dl>
   );
-});
+};
 
-const SourceHelp: React.FC<{}> = React.memo(() => {
+const SourceHelp: React.FC<{}> = () => {
   const { t } = useTranslation();
   return (
     <dl className="co-inline">
@@ -433,7 +441,11 @@ const SourceHelp: React.FC<{}> = React.memo(() => {
       </dd>
     </dl>
   );
-});
+};
+
+type ActionWithHref = Omit<Action, 'cta'> & { cta: { href: string; external?: boolean } };
+
+const isActionWithHref = (action: Action): action is ActionWithHref => 'href' in action.cta;
 
 const queryBrowserURL = (query: string, namespace: string) =>
   namespace
@@ -482,8 +494,12 @@ const tableSilenceClasses = [
 
 const SilenceMatchersList = ({ silence }) => (
   <div className={`co-text-${SilenceResource.kind.toLowerCase()}`}>
-    {_.map(silence.matchers, ({ name, isRegex, value }, i) => (
-      <Label key={i} k={name} v={isRegex ? `~${value}` : value} />
+    {_.map(silence.matchers, ({ name, isEqual, isRegex, value }, i) => (
+      <Label className="co-label" key={i}>
+        <span className="co-label__key">{name}</span>
+        <span className="co-label__eq">{silenceMatcherEqualitySymbol(isEqual, isRegex)}</span>
+        <span className="co-label__value">{value}</span>
+      </Label>
     ))}
   </div>
 );
@@ -678,6 +694,11 @@ const AlertsDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const labels: PrometheusLabels = React.useMemo(() => alert?.labels, [labelsMemoKey]);
 
+  // eslint-disable-next-line camelcase
+  const runbookURL = alert?.annotations?.runbook_url;
+
+  const actionsContext: ActionContext = { 'alert-detail-toolbar-actions': { alert } };
+
   return (
     <>
       <Helmet>
@@ -716,8 +737,30 @@ const AlertsDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
           <HeaderAlertMessage alert={alert} rule={rule} />
         </div>
         <div className="co-m-pane__body">
-          <ToggleGraph />
-          <SectionHeading text={t('public~Alert details')} />
+          <Toolbar className="monitoring-alert-detail-toolbar">
+            <ToolbarContent>
+              <ToolbarItem variant="label">
+                <SectionHeading text={t('public~Alert details')} />
+              </ToolbarItem>
+              <ToolbarGroup alignment={{ default: 'alignRight' }}>
+                <ActionServiceProvider context={actionsContext}>
+                  {({ actions, loaded }) =>
+                    loaded
+                      ? actions.filter(isActionWithHref).map((action) => (
+                          <ToolbarItem key={action.id}>
+                            <Link to={action.cta.href}>{action.label}</Link>
+                          </ToolbarItem>
+                        ))
+                      : null
+                  }
+                </ActionServiceProvider>
+                <ToolbarItem>
+                  <ToggleGraph />
+                </ToolbarItem>
+              </ToolbarGroup>
+            </ToolbarContent>
+          </Toolbar>
+
           <div className="co-m-pane__body-group">
             <div className="row">
               <div className="col-sm-12">
@@ -770,6 +813,14 @@ const AlertsDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
                       </dd>
                     </>
                   )}
+                  {runbookURL && (
+                    <>
+                      <dt>{t('public~Runbook')}</dt>
+                      <dd>
+                        <ExternalLink href={runbookURL} text={runbookURL} />
+                      </dd>
+                    </>
+                  )}
                 </dl>
               </div>
               <div className="col-sm-6">
@@ -788,6 +839,8 @@ const AlertsDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
                 </dl>
               </div>
             </div>
+          </div>
+          <div className="co-m-pane__body-group">
             <div className="row">
               <div className="col-xs-12">
                 <dl className="co-m-pane__details" data-test="label-list">
@@ -798,6 +851,8 @@ const AlertsDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
                 </dl>
               </div>
             </div>
+          </div>
+          <div className="co-m-pane__body-group">
             <div className="row">
               <div className="col-xs-12">
                 <dl className="co-m-pane__details">
@@ -931,6 +986,9 @@ const AlertRulesDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
     return `${nameLabel}{${_.map(otherLabels, (v, k) => `${k}="${v}"`).join(',')}}`;
   };
 
+  // eslint-disable-next-line camelcase
+  const runbookURL = rule?.annotations?.runbook_url;
+
   return (
     <>
       <Helmet>
@@ -997,6 +1055,14 @@ const AlertRulesDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
                       </dd>
                     </>
                   )}
+                  {runbookURL && (
+                    <>
+                      <dt>{t('public~Runbook')}</dt>
+                      <dd>
+                        <ExternalLink href={runbookURL} text={runbookURL} />
+                      </dd>
+                    </>
+                  )}
                 </dl>
               </div>
               <div className="col-sm-6">
@@ -1024,6 +1090,8 @@ const AlertRulesDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
                 </dl>
               </div>
             </div>
+          </div>
+          <div className="co-m-pane__body-group">
             <div className="row">
               <div className="col-xs-12">
                 <dl className="co-m-pane__details">
@@ -1038,8 +1106,18 @@ const AlertRulesDetailsPage_: React.FC<{ match: any }> = ({ match }) => {
         </div>
         <div className="co-m-pane__body">
           <div className="co-m-pane__body-group">
-            <ToggleGraph />
-            <SectionHeading text={t('public~Active alerts')} />
+            <Toolbar className="monitoring-alert-detail-toolbar">
+              <ToolbarContent>
+                <ToolbarItem variant="label">
+                  <SectionHeading text={t('public~Active alerts')} />
+                </ToolbarItem>
+                <ToolbarGroup alignment={{ default: 'alignRight' }}>
+                  <ToolbarItem>
+                    <ToggleGraph />
+                  </ToolbarItem>
+                </ToolbarGroup>
+              </ToolbarContent>
+            </Toolbar>
             <div className="row">
               <div className="col-sm-12">
                 <Graph
@@ -1289,6 +1367,8 @@ const AlertTableRow: React.FC<RowFunctionArgs<Alert>> = ({ obj }) => {
 };
 
 export const severityRowFilter = (): RowFilter => ({
+  filter: (filter, alert: Alert) =>
+    filter.selected?.includes(alert.labels?.severity) || _.isEmpty(filter.selected),
   filterGroupName: i18next.t('public~Severity'),
   items: [
     { id: AlertSeverity.Critical, title: i18next.t('public~Critical') },
@@ -1303,6 +1383,8 @@ export const severityRowFilter = (): RowFilter => ({
 const alertsRowFilters = (): RowFilter[] => [
   {
     defaultSelected: [AlertStates.Firing],
+    filter: (filter, alert: Alert) =>
+      filter.selected?.includes(alertState(alert)) || _.isEmpty(filter.selected),
     filterGroupName: i18next.t('public~Alert State'),
     items: [
       { id: AlertStates.Firing, title: i18next.t('public~Firing') },
@@ -1315,6 +1397,8 @@ const alertsRowFilters = (): RowFilter[] => [
   severityRowFilter(),
   {
     defaultSelected: [AlertSource.Platform],
+    filter: (filter, alert: Alert) =>
+      filter.selected?.includes(alertSource(alert)) || _.isEmpty(filter.selected),
     filterGroupName: i18next.t('public~Source'),
     items: [
       { id: AlertSource.Platform, title: i18next.t('public~Platform') },
@@ -1571,6 +1655,8 @@ const RulesPage_: React.FC<{}> = () => {
     severityRowFilter(),
     {
       defaultSelected: [AlertSource.Platform],
+      filter: (filter, rule: Rule) =>
+        filter.selected?.includes(alertingRuleSource(rule)) || _.isEmpty(filter.selected),
       filterGroupName: t('public~Source'),
       items: [
         { id: AlertSource.Platform, title: t('public~Platform') },
@@ -1628,14 +1714,16 @@ const SilencesPage_: React.FC<Silences> = () => {
   const silencesRowFilters: RowFilter[] = [
     {
       defaultSelected: [SilenceStates.Active, SilenceStates.Pending],
-      type: 'silence-state',
+      filter: (filter, silence: Silence) =>
+        filter.selected?.includes(silenceState(silence)) || _.isEmpty(filter.selected),
       filterGroupName: t('public~Silence State'),
-      reducer: silenceState,
       items: [
         { id: SilenceStates.Active, title: t('public~Active') },
         { id: SilenceStates.Pending, title: t('public~Pending') },
         { id: SilenceStates.Expired, title: t('public~Expired') },
       ],
+      reducer: silenceState,
+      type: 'silence-state',
     },
   ];
 

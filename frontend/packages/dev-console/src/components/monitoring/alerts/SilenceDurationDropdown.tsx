@@ -1,24 +1,24 @@
 import * as React from 'react';
+import { parsePrometheusDuration } from '@openshift-console/plugin-shared/src/datetime/prometheus';
 import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 // FIXME upgrading redux types is causing many errors at this time
 // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
 // @ts-ignore
 import { useSelector, useDispatch } from 'react-redux';
-import { getUser } from '@console/dynamic-plugin-sdk';
-import { alertingSetRules } from '@console/internal/actions/observe';
-import { coFetchJSON } from '@console/internal/co-fetch';
-import { ALERTMANAGER_TENANCY_BASE_PATH } from '@console/internal/components/graphs';
 import {
   AlertStates,
+  getUser,
   Rule,
   RuleStates,
   Silence,
   SilenceStates,
-} from '@console/internal/components/monitoring/types';
+} from '@console/dynamic-plugin-sdk';
+import { alertingSetRules } from '@console/internal/actions/observe';
+import { coFetchJSON } from '@console/internal/co-fetch';
+import { ALERTMANAGER_TENANCY_BASE_PATH } from '@console/internal/components/graphs';
 import { isSilenced } from '@console/internal/components/monitoring/utils';
 import { Dropdown, LoadingInline } from '@console/internal/components/utils';
-import { parsePrometheusDuration } from '@console/internal/components/utils/datetime';
 import { RootState } from '@console/internal/redux';
 import './SilenceDurationDropdown.scss';
 
@@ -34,6 +34,8 @@ const durations = {
   '2h': '2 hours',
   '1d': '1 day',
 };
+
+const externalLabelFilter = ({ name }: { name: string }) => name !== 'prometheus';
 
 const SilenceDurationDropDown: React.FC<SilenceDurationDropDownProps> = ({
   rule,
@@ -54,7 +56,7 @@ const SilenceDurationDropDown: React.FC<SilenceDurationDropDownProps> = ({
       value: rule.name,
     },
     ...ruleMatchers,
-  ];
+  ].filter(externalLabelFilter);
 
   const setDuration = (duration: string) => {
     const startsAt = new Date();

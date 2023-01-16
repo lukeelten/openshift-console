@@ -14,6 +14,10 @@ export const devNavigationMenuPO = {
   environments: '[data-test-id="environments-header"]',
 };
 
+export const adminNavigationMenuPO = {
+  home: { main: '[data-quickstart-id="qs-nav-home"]', search: "a[href*='/search/ns/']" },
+};
+
 export const createSourceSecret = {
   form: 'form.co-create-secret-form.modal-content',
   secretName: '#secret-name',
@@ -40,6 +44,7 @@ export const formPO = {
   save: '[data-test="save-changes"]',
   errorAlert: '[aria-label="Danger Alert"]',
   successAlert: '[aria-label="Success Alert"]',
+  confirm: '[data-test="confirm-action"]',
 };
 export const alert = '.pf-c-alert';
 export const pagePO = {

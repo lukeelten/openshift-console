@@ -194,8 +194,8 @@ export type DevfileSuggestedResources = {
   imageStream: K8sResourceKind;
   buildResource: K8sResourceKind;
   deployResource: K8sResourceKind;
-  service: K8sResourceKind;
-  route: K8sResourceKind;
+  service?: K8sResourceKind | null;
+  route?: K8sResourceKind | null;
 };
 
 export interface RouteData {
@@ -291,16 +291,17 @@ export enum Resources {
   KnativeService = 'knative',
 }
 
-export const ReadableResourcesNames = {
+export const ReadableResourcesNames: Record<Resources, string> = {
   [Resources.OpenShift]: DeploymentConfigModel.labelKey,
   [Resources.Kubernetes]: DeploymentModel.labelKey,
   // t('devconsole~Serverless Deployment')
   [Resources.KnativeService]: `devconsole~Serverless Deployment`,
 };
 
-export const ResourcesKinds = {
+export const ResourcesKinds: Record<Resources, string> = {
   [Resources.OpenShift]: DeploymentConfigModel.kind,
   [Resources.Kubernetes]: DeploymentModel.kind,
+  [Resources.KnativeService]: 'Service',
 };
 
 export interface ImportData {

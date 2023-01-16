@@ -2,8 +2,7 @@ export const cardTitle = '[data-test="title"]';
 
 export const addPagePO = {
   gettingStarted: '[data-test="getting-started"]',
-  detailsOnOffText: '[data-test="label"]',
-  detailsOnOffSwitch: '.pf-c-switch__toggle',
+  detailsOnOffSwitch: '[data-test="details-switch"]',
   cardDetails: 'p.odc-add-card-item__description',
   restoreGettingStarted: '[data-test="restore-getting-started"]',
   kebabMenuGettingStarted: '[data-test="actions"]',
@@ -44,11 +43,6 @@ export const gitPO = {
     infoMessage: '[aria-label="Info Alert"]',
     addPipeline: '#form-checkbox-pipeline-enabled-field',
     pipelineDropdown: '#form-dropdown-pipeline-templateSelected-field',
-  },
-  resources: {
-    deployment: '#form-radiobutton-resources-kubernetes-field',
-    deploymentConfig: '#form-radiobutton-resources-openshift-field',
-    knative: '#form-radiobutton-resources-knative-field',
   },
   advancedOptions: {
     createRoute: '#form-checkbox-route-create-field',
@@ -97,6 +91,12 @@ export const gitPO = {
       memoryLimitHelperText: 'div#form-resource-limit-limits-memory-limit-field-helper',
     },
     labels: 'input[data-test="labels"]',
+    resourcesDropdown: '#form-select-input-resources-field',
+    resources: {
+      deployment: '#select-option-resources-kubernetes',
+      deploymentConfig: '#select-option-resources-openshift',
+      knative: '#select-option-resources-knative',
+    },
   },
 };
 
@@ -132,6 +132,13 @@ export const catalogPO = {
     managedServices: '[data-test="kind-managed-service"]',
     eventSources: '[data-test="tab EventSource"]',
     eventSinks: '[data-test="tab EventSink"]',
+  },
+  catalogCategoriesByTitle: {
+    'CI/CD': '[data-test="tab cicd"]',
+    Databases: '[data-test="tab databases"]',
+    Languages: '[data-test="tab languages"]',
+    Middleware: '[data-test="tab middleware"]',
+    Other: '[data-test="tab other"]',
   },
   cards: {
     mariaDBTemplate: 'a[data-test="Template-MariaDB"] .catalog-tile-pf-title',
@@ -357,6 +364,7 @@ export const helmChartRepositoriesPO = {
   formTitle: '[data-test="form-title"]',
   cancelButton: '[data-test-id="cancel-button"]',
   name: '#form-input-formData-repoName-field',
+  displayName: '#form-input-formData-repoDisplayName-field',
   description: '#form-input-formData-repoDescription-field',
   url: '#form-input-formData-repoUrl-field',
 };

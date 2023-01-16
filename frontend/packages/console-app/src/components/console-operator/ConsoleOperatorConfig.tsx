@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button } from '@patternfly/react-core';
+import { Alert, Button } from '@patternfly/react-core';
 import { PencilAltIcon } from '@patternfly/react-icons';
 import {
   ISortBy,
@@ -12,13 +12,19 @@ import {
   TableVariant,
 } from '@patternfly/react-table';
 import { useTranslation } from 'react-i18next';
-import { WatchK8sResource } from '@console/dynamic-plugin-sdk';
+import { useAccessReview, WatchK8sResource } from '@console/dynamic-plugin-sdk';
 import { breadcrumbsForGlobalConfig } from '@console/internal/components/cluster-settings/global-config';
 import { DetailsForKind } from '@console/internal/components/default-resource';
 import { DetailsPage } from '@console/internal/components/factory';
-import { EmptyBox, LoadingBox, navFactory, ResourceLink } from '@console/internal/components/utils';
+import {
+  asAccessReview,
+  EmptyBox,
+  KebabAction,
+  LoadingBox,
+  navFactory,
+  ResourceLink,
+} from '@console/internal/components/utils';
 import { useK8sWatchResource } from '@console/internal/components/utils/k8s-watch-hook';
-import { useAccessReview } from '@console/internal/components/utils/rbac';
 import { ConsoleOperatorConfigModel, ConsolePluginModel } from '@console/internal/models';
 import {
   ConsolePluginKind,
@@ -151,6 +157,16 @@ const ConsolePluginsList: React.FC<ConsolePluginsListType> = ({ obj }) => {
 
   return consolePluginsLoaded ? (
     <div className="co-m-pane__body">
+      {obj.spec?.managementState === 'Unmanaged' && (
+        <Alert
+          className="co-alert"
+          variant="info"
+          isInline
+          title={t(
+            'console-app~Console operator spec.managementState is unmanaged. Changes to plugins will have no effect.',
+          )}
+        />
+      )}
       {rows.length ? (
         <Table
           aria-label={t('console-app~Console plugins table')}
@@ -187,11 +203,27 @@ export const ConsoleOperatorConfigDetailsPage: React.FC<React.ComponentProps<
     },
   ];
 
+  const menuActions: KebabAction[] = [
+    () => ({
+      // t('console-app~Customize')
+      labelKey: 'console-app~Customize',
+      labelKind: { kind: ConsoleOperatorConfigModel.kind },
+      dataTest: `Customize`,
+      href: '/cluster-configuration',
+      accessReview: asAccessReview(
+        ConsoleOperatorConfigModel,
+        { spec: { name: 'cluster' } },
+        'patch',
+      ),
+    }),
+  ];
+
   return (
     <DetailsPage
       {...props}
       kind={consoleOperatorConfigReference}
       pages={pages}
+      menuActions={menuActions}
       breadcrumbsFor={() =>
         breadcrumbsForGlobalConfig(ConsoleOperatorConfigModel.label, props.match.url)
       }

@@ -15,6 +15,7 @@ declare module '*.png' {
 declare interface Window {
   SERVER_FLAGS: {
     alertManagerBaseURL: string;
+    alertmanagerUserWorkloadBaseURL: string;
     authDisabled: boolean;
     basePath: string;
     branding: string;
@@ -43,6 +44,8 @@ declare interface Window {
     GOOS: string;
     graphqlBaseURL: string;
     developerCatalogCategories: string;
+    perspectives: string;
+    developerCatalogTypes: string;
     userSettingsLocation: string;
     addPage: string; // JSON encoded configuration
     consolePlugins: string[]; // Console dynamic plugins enabled on the cluster
@@ -52,6 +55,7 @@ declare interface Window {
     clusters: string[];
     controlPlaneTopology: string;
     telemetry: Record<string, string>;
+    nodeArchitectures: string[];
   };
   windowError?: string;
   __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?: Function;

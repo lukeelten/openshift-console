@@ -94,10 +94,15 @@ export const getUserAnnotations = (allAnnotations: { [key: string]: string }) =>
 };
 
 export const getPodLabels = (resource: Resources, name: string) => {
-  const resourceKind = _.toLower(ResourcesKinds[resource]);
+  const resourceKind = ResourcesKinds[resource];
+  if (resourceKind) {
+    return {
+      app: name,
+      [resourceKind.toLowerCase()]: name,
+    };
+  }
   return {
     app: name,
-    [resourceKind]: name,
   };
 };
 
@@ -143,9 +148,14 @@ export const mergeData = (originalResource: K8sResourceKind, newResource: K8sRes
   if (mergedData.spec?.triggers) {
     mergedData.spec.triggers = newResource.spec.triggers;
   }
+  if (!newResource.spec?.source?.sourceSecret) {
+    delete mergedData?.spec?.source?.sourceSecret;
+  }
+
   if (mergedData.spec?.template?.spec?.hasOwnProperty('volumes')) {
     mergedData.spec.template.spec.volumes = originalResource.spec?.template?.spec?.volumes;
   }
+
   return mergedData;
 };
 

@@ -25,6 +25,28 @@
     "type": "console.flag/model",
     "properties": {
       "model": {
+        "group": "operator.knative.dev",
+        "version": "v1beta1",
+        "kind": "KnativeServing"
+      },
+      "flag": "KNATIVE_SERVING"
+    }
+  },
+  {
+    "type": "console.flag/model",
+    "properties": {
+      "model": {
+        "group": "operator.knative.dev",
+        "version": "v1beta1",
+        "kind": "KnativeEventing"
+      },
+      "flag": "KNATIVE_EVENTING"
+    }
+  },
+  {
+    "type": "console.flag/model",
+    "properties": {
+      "model": {
         "group": "serving.knative.dev",
         "version": "v1",
         "kind": "Configuration"
@@ -441,9 +463,15 @@
     }
   },
   {
+    "type": "console.flag/hookProvider",
+    "properties": {
+      "handler": { "$codeRef": "catalog.knativeEventingTypeProvider" }
+    }
+  },
+  {
     "type": "dev-console.add/action",
     "flags": {
-      "required": ["KNATIVE_EVENTING"]
+      "required": ["KNATIVE_EVENTING", "DEVELOPER_CATALOG", "KNATIVE_EVENT_SOURCE_CATALOG_TYPE"]
     },
     "properties": {
       "id": "knative-event-source",
@@ -489,7 +517,7 @@
   {
     "type": "dev-console.add/action",
     "flags": {
-      "required": ["KNATIVE_EVENTING"]
+      "required": ["KNATIVE_EVENTING", "DEVELOPER_CATALOG", "KNATIVE_EVENT_SINK_CATALOG_TYPE"]
     },
     "properties": {
       "id": "knative-event-sink",
@@ -524,7 +552,7 @@
       "catalogId": "dev-catalog",
       "type": "EventSource",
       "title": "%knative-plugin~Event Sources%",
-      "provider": { "$codeRef": "catalog.eventSourceProvider" }
+      "provider": { "$codeRef": "catalog.useEventSourceProvider" }
     },
     "flags": {
       "required": ["KNATIVE_EVENTING"]
@@ -570,6 +598,18 @@
     },
     "flags": {
       "required": ["FLAG_CAMEL_KAMELETS"]
+    }
+  },
+  {
+    "type": "console.catalog/item-provider",
+    "properties": {
+      "catalogId": "dev-catalog",
+      "type": "EventSink",
+      "title": "%knative-plugin~Event Sinks%",
+      "provider": { "$codeRef": "catalog.kafkaSinkProvider" }
+    },
+    "flags": {
+      "required": ["FLAG_KAFKA_SINK"]
     }
   },
   {
@@ -768,11 +808,22 @@
     "type": "console.topology/component/factory",
     "properties": {
       "getFactory": {
-        "$codeRef": "topology.getKnativeComponentFactory"
+        "$codeRef": "topology.getKnativeServingComponentFactory"
       }
     },
     "flags": {
-      "required": ["KNATIVE_SERVING", "KNATIVE_SERVING_SERVICE", "KNATIVE_EVENTING"]
+      "required": ["KNATIVE_SERVING", "KNATIVE_SERVING_SERVICE"]
+    }
+  },
+  {
+    "type": "console.topology/component/factory",
+    "properties": {
+      "getFactory": {
+        "$codeRef": "topology.getKnativeEventingComponentFactory"
+      }
+    },
+    "flags": {
+      "required": ["KNATIVE_EVENTING"]
     }
   },
   {

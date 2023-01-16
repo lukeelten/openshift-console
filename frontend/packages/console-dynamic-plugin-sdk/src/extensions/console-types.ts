@@ -1,15 +1,16 @@
 import * as React from 'react';
 import { ButtonProps } from '@patternfly/react-core';
-import { TableGridBreakpoint, OnSelect, SortByDirection, ICell } from '@patternfly/react-table';
+import { ICell, OnSelect, SortByDirection, TableGridBreakpoint } from '@patternfly/react-table';
+import MonacoEditor from 'react-monaco-editor/lib/editor';
 import { RouteComponentProps } from 'react-router';
 import {
   ExtensionK8sGroupKindModel,
   K8sModel,
+  PrometheusEndpoint,
   PrometheusLabels,
   PrometheusValue,
   ResolvedExtension,
   Selector,
-  PrometheusEndpoint,
 } from '../api/common-types';
 import { Extension, ExtensionTypeGuard } from '../types';
 
@@ -469,6 +470,13 @@ export type ResourceLinkProps = {
   truncate?: boolean;
 };
 
+export type ResourceIconProps = {
+  className?: string;
+  /** @deprecated Use groupVersionKind instead. The kind property will be removed in a future release. */
+  kind?: K8sResourceKindReference;
+  groupVersionKind?: K8sGroupVersionKind;
+};
+
 export type UseK8sModel = (
   // Use K8sGroupVersionKind type instead of K8sResourceKindReference. Support for type K8sResourceKindReference will be removed in a future release.
   groupVersionKind?: K8sResourceKindReference | K8sGroupVersionKind,
@@ -610,6 +618,20 @@ export type SelfSubjectAccessReviewKind = {
   };
 };
 
+export type YAMLEditorProps = {
+  value?: string;
+  options?: object;
+  minHeight?: string | number;
+  showShortcuts?: boolean;
+  toolbarLinks?: React.ReactNodeArray;
+  onChange?: (newValue, event) => void;
+  onSave?: () => void;
+};
+
+export type YAMLEditorRef = {
+  editor?: MonacoEditor['editor'];
+};
+
 export type ResourceYAMLEditorProps = {
   initialResource: string | { [key: string]: any };
   header?: string;
@@ -625,4 +647,17 @@ export type TimestampProps = {
   simple?: boolean;
   omitSuffix?: boolean;
   className?: string;
+};
+
+export type NamespaceBarProps = {
+  onNamespaceChange?: (namespace: string) => void;
+  isDisabled?: boolean;
+  children?: React.ReactNode;
+};
+
+export type ErrorBoundaryFallbackProps = {
+  errorMessage: string;
+  componentStack: string;
+  stack: string;
+  title: string;
 };

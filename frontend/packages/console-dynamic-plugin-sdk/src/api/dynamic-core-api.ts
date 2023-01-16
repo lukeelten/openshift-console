@@ -1,6 +1,8 @@
 /* eslint-disable */
 import * as React from 'react';
+import { ActionServiceProviderProps } from '../extensions/actions';
 import {
+  ErrorBoundaryFallbackProps,
   HorizontalNavProps,
   UseResolvedExtensions,
   VirtualizedTableFC,
@@ -14,15 +16,19 @@ import {
   ListPageFilterProps,
   UseListPageFilter,
   ResourceLinkProps,
+  ResourceIconProps,
   OverviewProps,
   OverviewGridProps,
   InventoryItemTitleProps,
   InventoryItemBodyProps,
   InventoryItemStatusProps,
+  YAMLEditorProps,
   ResourceYAMLEditorProps,
   ResourceEventStreamProps,
   UsePrometheusPoll,
   TimestampProps,
+  NamespaceBarProps,
+  YAMLEditorRef,
 } from '../extensions/console-types';
 import { StatusPopupSectionProps, StatusPopupItemProps } from '../extensions/dashboard-types';
 
@@ -98,7 +104,7 @@ export const HorizontalNav: React.FC<HorizontalNavProps> = require('@console/int
  *   );
  * }
  * ```
- */  
+ */
 export const VirtualizedTable: VirtualizedTableFC = require('@console/internal/components/factory/Table/VirtualizedTable')
   .default;
 
@@ -148,7 +154,7 @@ export const useActiveColumns: UseActiveColumns = require('@console/internal/com
   .useActiveColumns;
 
 /**
- * Component for generating a page header 
+ * Component for generating a page header
  * @param {string} title - heading title
  * @param {ReactNode} [helpText] -  (optional) help section as react node
  * @param {ReactNode} [badge] -  (optional) badge icon as react node
@@ -162,7 +168,7 @@ export const useActiveColumns: UseActiveColumns = require('@console/internal/com
  *   );
  * };
  * ```
- */  
+ */
 export const ListPageHeader: React.FC<ListPageHeaderProps> = require('@console/internal/components/factory/ListPage/ListPageHeader')
   .default;
 
@@ -181,33 +187,33 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = require('@console/i
  *   );
  * };
  * ```
- */  
- export const ListPageCreate: React.FC<ListPageCreateProps> = require('@console/internal/components/factory/ListPage/ListPageCreate')
+ */
+export const ListPageCreate: React.FC<ListPageCreateProps> = require('@console/internal/components/factory/ListPage/ListPageCreate')
   .default;
 
- /**
-  * Component for creating a stylized link
-  * @param {string} to - string location where link should direct
-  * @param {object} [createAccessReview] -  (optional) object with namespace and kind used to determine access
-  * @param {ReactNode} [children] -  (optional) children for the component
-  * @example
-  * ```ts
-  * const exampleList: React.FC<MyProps> = () => {
-  *  return (
-  *   <>
-  *    <ListPageHeader title="Example Pod List Page"/>
-  *       <ListPageCreateLink to={'/link/to/my/page'}>Create Item</ListPageCreateLink>
-  *    </ListPageHeader>
-  *   </>
-  *  );
-  * };
-  * ```
-  */  
- export const ListPageCreateLink: React.FC<ListPageCreateLinkProps> = require('@console/internal/components/factory/ListPage/ListPageCreate')
+/**
+ * Component for creating a stylized link
+ * @param {string} to - string location where link should direct
+ * @param {object} [createAccessReview] -  (optional) object with namespace and kind used to determine access
+ * @param {ReactNode} [children] -  (optional) children for the component
+ * @example
+ * ```ts
+ * const exampleList: React.FC<MyProps> = () => {
+ *  return (
+ *   <>
+ *    <ListPageHeader title="Example Pod List Page"/>
+ *       <ListPageCreateLink to={'/link/to/my/page'}>Create Item</ListPageCreateLink>
+ *    </ListPageHeader>
+ *   </>
+ *  );
+ * };
+ * ```
+ */
+export const ListPageCreateLink: React.FC<ListPageCreateLinkProps> = require('@console/internal/components/factory/ListPage/ListPageCreate')
   .ListPageCreateLink;
 
 /**
- * Component for creating button 
+ * Component for creating button
  * @param {object} [createAccessReview] - (optional) object with namespace and kind used to determine access
  * @param {...object} [pfButtonProps] - (optional) Patternfly Button props
  * @example
@@ -222,8 +228,8 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = require('@console/i
  *   );
  * };
  * ```
- */  
- export const ListPageCreateButton: React.FC<ListPageCreateButtonProps> = require('@console/internal/components/factory/ListPage/ListPageCreate')
+ */
+export const ListPageCreateButton: React.FC<ListPageCreateButtonProps> = require('@console/internal/components/factory/ListPage/ListPageCreate')
   .ListPageCreateButton;
 
 /**
@@ -248,7 +254,7 @@ export const ListPageHeader: React.FC<ListPageHeaderProps> = require('@console/i
  *   );
  * };
  * ```
- */  
+ */
 export const ListPageCreateDropdown: React.FC<ListPageCreateDropdownProps> = require('@console/internal/components/factory/ListPage/ListPageCreate')
   .ListPageCreateDropdown;
 
@@ -261,7 +267,7 @@ export const ListPageCreateDropdown: React.FC<ListPageCreateDropdownProps> = req
  * @param {string} [nameFilterPlaceholder] -  (optional) placeholder for name filter
  * @param {string} [labelFilterPlaceholder] -  (optional) placeholder for label filter
  * @param {boolean} [hideLabelFilter] -  (optional) only shows the name filter instead of both name and label filter
- * @param {boolean} [hideNameLabelFilter] -  (optional) hides both name and label filter 
+ * @param {boolean} [hideNameLabelFilter] -  (optional) hides both name and label filter
  * @param {ColumnLayout} [columnLayout] -  (optional) column layout object
  * @param {boolean} [hideColumnManagement] -  (optional) flag to hide the column management
  * @example
@@ -344,6 +350,19 @@ export const ResourceLink: React.FC<ResourceLinkProps> = require('@console/inter
   .ResourceLink;
 export { default as ResourceStatus } from '../app/components/utils/resource-status';
 
+/**
+ * Component that creates an icon badge for a specific resource type
+ * @param {K8sResourceKindReference} [kind] - (optional) the kind of resource i.e. Pod, Deployment, Namespace
+ * @param {K8sGroupVersionKind} [groupVersionKind] - (optional) object with group, version, and kind
+ * @param {string} [className] -  (optional) class style for component
+ * @example
+ * ```tsx
+ * <ResourceIcon kind="Pod"/>
+ * ```
+ */
+export const ResourceIcon: React.FC<ResourceIconProps> = require('@console/internal/components/utils/resource-icon')
+  .ResourceIcon;
+
 export {
   useK8sModel,
   useK8sModels,
@@ -371,8 +390,8 @@ export {
 
 /**
  * Component that shows the status in a popup window. Helpful component for building `console.dashboards/overview/health/resource` extensions
- * @param {ReactNode} firstColumn - values for first column of popup 
- * @param {ReactNode} [secondColumn] - (optional) values for second column of popup 
+ * @param {ReactNode} firstColumn - values for first column of popup
+ * @param {ReactNode} [secondColumn] - (optional) values for second column of popup
  * @param {ReactNode} [children] -  (optional) children for the popup
  * @example
  * ```tsx
@@ -411,7 +430,7 @@ export const StatusPopupSection: React.FC<StatusPopupSectionProps> = require('@c
  *    </StatusPopupItem>
  * </StatusPopupSection>
  * ```
- */  
+ */
 export const StatusPopupItem: React.FC<StatusPopupItemProps> = require('@console/shared/src/components/dashboard/status-card/StatusPopup')
   .default;
 
@@ -441,7 +460,7 @@ export const Overview: React.FC<OverviewProps> = require('@console/shared/src/co
  *     </Overview>
  *```
  */
- export const OverviewGrid: React.FC<OverviewGridProps> = require('@console/shared/src/components/dashboard/DashboardGrid')
+export const OverviewGrid: React.FC<OverviewGridProps> = require('@console/shared/src/components/dashboard/DashboardGrid')
   .default;
 
 /**
@@ -475,7 +494,7 @@ export const InventoryItem: React.FC = require('@console/shared/src/components/d
  *       </InventoryItemBody>
  *     </InventoryItem>
  *   )
- * ``` 
+ * ```
  */
 export const InventoryItemTitle: React.FC<InventoryItemTitleProps> = require('@console/shared/src/components/dashboard/inventory-card/InventoryCard')
   .InventoryItemTitle;
@@ -541,8 +560,32 @@ export const InventoryItemLoading: React.FC = require('@console/shared/src/compo
 export { useFlag } from '../utils/flags';
 
 /**
+ * A basic lazy loaded YAML editor with hover help and completion.
+ * @example
+ * ```tsx
+ * <React.Suspense fallback={<LoadingBox />}>
+ *   <YAMLEditor
+ *     value={code}
+ *   />
+ * </React.Suspense>
+ * ```
+ * @param {YAMLEditorProps['value']} value - String representing the yaml code to render.
+ * @param {YAMLEditorProps['options']} options - Monaco editor options. For more details, please, visit https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneEditorConstructionOptions.html.
+ * @param {YAMLEditorProps['minHeight']} minHeight - Minimum editor height in valid CSS height values.
+ * @param {YAMLEditorProps['showShortcuts']} showShortcuts - Boolean to show shortcuts on top of the editor.
+ * @param {YAMLEditorProps['toolbarLinks']} toolbarLinks - Array of ReactNode rendered on the toolbar links section on top of the editor.
+ * @param {YAMLEditorProps['onChange']} onChange - Callback for on code change event.
+ * @param {YAMLEditorProps['onSave']} onSave - Callback called when the command CTRL / CMD + S is triggered.
+ * @param {YAMLEditorRef} ref - React reference to `{ editor?: IStandaloneCodeEditor }`. Using the 'editor' property, you are able to access to all methods to control the editor. For more information, visit https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.IStandaloneCodeEditor.html.
+ */
+export const YAMLEditor: React.ForwardRefExoticComponent<YAMLEditorProps & React.RefAttributes<YAMLEditorRef>> = require('@console/internal/components/AsyncYAMLEditor')
+  .AsyncYAMLEditor;
+
+/**
  * A lazy loaded YAML editor for Kubernetes resources with hover help and completion.
- * The editor will handle updating the resource when the user clicks save unless an onSave handler is provided.
+ * The component use the YAMLEditor and add on top of it more functionality like
+ * resource update handling, alerts, save, cancel and reload buttons, accessibility and more.
+ * Unless onSave callback is provided, the resource update is automatically handled.
  * It should be wrapped in a React.Suspense component.
  * @example
  * ```tsx
@@ -572,7 +615,6 @@ export const ResourceYAMLEditor: React.FC<ResourceYAMLEditorProps> = require('@c
  */
 export const ResourceEventStream: React.FC<ResourceEventStreamProps> = require('@console/internal/components/events')
   .WrappedResourceEventStream;
-
 
 /**
  * Sets up a poll to Prometheus for a single query.
@@ -606,3 +648,76 @@ export const usePrometheusPoll: UsePrometheusPoll = (options) => {
  */
 export const Timestamp: React.FC<TimestampProps> = require('@console/internal/components/utils/timestamp')
   .Timestamp;
+
+export { useModal } from '../app/modal-support/useModal';
+
+/**
+ * Component that allows to receive contributions from other plugins for the `console.action/provider` extension type.
+ * See docs: https://github.com/openshift/console/blob/master/frontend/packages/console-dynamic-plugin-sdk/docs/console-extensions.md#consoleactionprovider
+ *
+ * @param {ActionServiceProviderProps["context"]} context - Object with contextId and optional plugin data
+ * @example
+ * ```tsx
+ *    const context: ActionContext = { 'a-context-id': { dataFromDynamicPlugin } };
+ *
+ *    ...
+ *
+ *    <ActionServiceProvider context={context}>
+ *        {({ actions, options, loaded }) =>
+ *          loaded && (
+ *            <ActionMenu actions={actions} options={options} variant={ActionMenuVariant.DROPDOWN} />
+ *          )
+ *        }
+ *    </ActionServiceProvider>
+ * ```
+ */
+export const ActionServiceProvider: React.FC<ActionServiceProviderProps> = require('@console/shared/src/components/actions/ActionServiceProvider')
+  .default;
+
+/**
+ * A component that renders a horizontal toolbar with a namespace dropdown menu in the leftmost position. Additional components can be passed in as children and will be rendered to the right of the namespace dropdown. This component is designed to be used at the top of the page. It should be used on pages where the user needs to be able to change the active namespace, such as on pages with k8s resources.
+ * @param {function} onNamespaceChange - (optional) A function that is executed when a namespace option is selected. It accepts the new namespace in the form of a string as its only argument. The active namespace is updated automatically when an option is selected, but additional logic can be applied via this function. When the namespace is changed, the namespace parameter in the URL will be changed from the previous namespace to the newly selected namespace.
+ * @param {boolean} isDisabled - (optional) A boolean flag that disables the namespace dropdown if set to true. This option only applies to the namespace dropdown and has no effect on child components.
+ * @param {React.ReactNode} children - (optional) Additional elements to be rendered inside the toolbar to the right of the namespace dropdown.
+ * @example
+ * ```tsx
+ *    const logNamespaceChange = (namespace) => console.log(`New namespace: ${namespace}`);
+ *
+ *    ...
+ *
+ *    <NamespaceBar onNamespaceChange={logNamespaceChange}>
+ *      <NamespaceBarApplicationSelector />
+ *    </NamespaceBar>
+ *    <Page>
+ *
+ *      ...
+ * ```
+ */
+export const NamespaceBar: React.FC<NamespaceBarProps> = require('@console/internal/components/namespace-bar')
+  .NamespaceBar;
+
+/**
+ * Creates full page ErrorBoundaryFallbackPage component to display the "Oh no! Something went wrong."
+ * message along with the stack trace and other helpful debugging information. This is to be used in
+ * conjunction with an <ErrorBoundary> component.
+ *
+ * @param {string} errorMessage - text description of the error message
+ * @param {string} componentStack - component trace of the exception
+ * @param {string} stack - stack trace of the exception
+ * @param {string} title - title to render as the header of the error boundary page
+ * @example
+ *  ```tsx
+ *  //in ErrorBoundary component
+ *   return (
+ *     if (this.state.hasError) {
+ *       return <ErrorBoundaryFallbackPage errorMessage={errorString} componentStack={componentStackString}
+ *        stack={stackTraceString} title={errorString}/>;
+ *     }
+ *
+ *     return this.props.children;
+ *   }
+ *  )
+ * ```
+ */
+export const ErrorBoundaryFallbackPage: React.FC<ErrorBoundaryFallbackProps> = require('@console/shared/src/components/error/fallbacks/ErrorBoundaryFallbackPage')
+  .default;
